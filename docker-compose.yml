@@ -23,5 +23,14 @@ services:
       - "memory:/var/lib/mysql"
     tty: true
 
+  line:
+    build: ./line/
+    environment:
+      VIRTUAL_HOST: "${LINE_VIRTUAL_HOST}"
+      CHANNEL_ID: "${LINE_CHANNEL_ID}"
+      CHANNEL_SECRET: "${LINE_CHANNEL_SECRET}"
+      CHANNEL_TOKEN: "${LINE_CHANNEL_TOKEN}"
+      
 volumes:
   memory: {}
+
