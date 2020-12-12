@@ -1,0 +1,95 @@
+name:                bot
+version:             0.1.0.0
+license:             BSD3
+author:              "taqenoqo"
+maintainer:          "tak3n0k0@gmail.com"
+copyright:           "2020 taqenoqo"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/bot#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- rio
+- constraints
+- persistent
+- persistent-template
+- persistent-mysql
+- mecab
+- monad-logger
+- conduit
+- random
+
+default-extensions:
+- NoImplicitPrelude
+- BangPatterns
+- BinaryLiterals
+- LambdaCase
+- MultiWayIf
+- NamedFieldPuns
+- PartialTypeSignatures
+- ViewPatterns
+- OverloadedStrings
+- TupleSections
+- DeriveDataTypeable
+- DeriveFoldable
+- DeriveFunctor
+- DeriveGeneric
+- DeriveTraversable
+- ConstraintKinds
+- DataKinds
+- DefaultSignatures
+- ExistentialQuantification
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GADTs
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- KindSignatures
+- MultiParamTypeClasses
+- PolyKinds
+- RankNTypes
+- ScopedTypeVariables
+- StandaloneDeriving
+- TypeFamilies
+- TypeSynonymInstances
+
+library:
+  source-dirs: src
+
+executables:
+  bot:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bot
+    - wai
+    - warp
+    - servant-server
+    - aeson
+
+tests:
+  bot-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bot
+

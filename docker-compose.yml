@@ -1,0 +1,27 @@
+version: "3"
+services:
+  bot:
+    build: ./bot/
+    ports:
+      - "3000:3000"
+    environment:
+      MYSQL_HOST: "db"
+      RIO_VERBOSE: 1
+    depends_on:
+      - "db"
+
+  db:
+    image: mysql:5.7 # 最新版だとbotから接続時に SSL connection error: unknown error number
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_DATABASE: "test"
+      BIND-ADDRESS: 0.0.0.0
+    volumes: 
+      - "memory:/var/lib/mysql"
+    tty: true
+
+volumes:
+  memory: {}

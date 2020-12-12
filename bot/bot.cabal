@@ -1,0 +1,90 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           bot
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/bot#readme>
+author:         taqenoqo
+maintainer:     tak3n0k0@gmail.com
+copyright:      2020 taqenoqo
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      NokoBot
+      NokoBot.Bots.Markov
+      NokoBot.Bots.Search
+      NokoBot.Types
+  other-modules:
+      Paths_bot
+  hs-source-dirs:
+      src
+  default-extensions: NoImplicitPrelude BangPatterns BinaryLiterals LambdaCase MultiWayIf NamedFieldPuns PartialTypeSignatures ViewPatterns OverloadedStrings TupleSections DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable ConstraintKinds DataKinds DefaultSignatures ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures MultiParamTypeClasses PolyKinds RankNTypes ScopedTypeVariables StandaloneDeriving TypeFamilies TypeSynonymInstances
+  build-depends:
+      base >=4.7 && <5
+    , conduit
+    , constraints
+    , mecab
+    , monad-logger
+    , persistent
+    , persistent-mysql
+    , persistent-template
+    , random
+    , rio
+  default-language: Haskell2010
+
+executable bot
+  main-is: Main.hs
+  other-modules:
+      Types
+      Paths_bot
+  hs-source-dirs:
+      app
+  default-extensions: NoImplicitPrelude BangPatterns BinaryLiterals LambdaCase MultiWayIf NamedFieldPuns PartialTypeSignatures ViewPatterns OverloadedStrings TupleSections DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable ConstraintKinds DataKinds DefaultSignatures ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures MultiParamTypeClasses PolyKinds RankNTypes ScopedTypeVariables StandaloneDeriving TypeFamilies TypeSynonymInstances
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bot
+    , conduit
+    , constraints
+    , mecab
+    , monad-logger
+    , persistent
+    , persistent-mysql
+    , persistent-template
+    , random
+    , rio
+    , servant-server
+    , wai
+    , warp
+  default-language: Haskell2010
+
+test-suite bot-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_bot
+  hs-source-dirs:
+      test
+  default-extensions: NoImplicitPrelude BangPatterns BinaryLiterals LambdaCase MultiWayIf NamedFieldPuns PartialTypeSignatures ViewPatterns OverloadedStrings TupleSections DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable ConstraintKinds DataKinds DefaultSignatures ExistentialQuantification FlexibleContexts FlexibleInstances FunctionalDependencies GADTs GeneralizedNewtypeDeriving InstanceSigs KindSignatures MultiParamTypeClasses PolyKinds RankNTypes ScopedTypeVariables StandaloneDeriving TypeFamilies TypeSynonymInstances
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bot
+    , conduit
+    , constraints
+    , mecab
+    , monad-logger
+    , persistent
+    , persistent-mysql
+    , persistent-template
+    , random
+    , rio
+  default-language: Haskell2010
