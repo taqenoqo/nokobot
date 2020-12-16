@@ -1,5 +1,11 @@
 require 'sinatra'
 require 'line/bot'
+require 'rest-client'
+
+configure do
+  set :port, ENV["PORT"]
+  set :bot_url, "http://#{ENV["BOT_HOST_NAME"]}:#{ENV["BOT_PORT"]}/bot"
+end
 
 def client
   @client ||= Line::Bot::Client.new do |config|
@@ -27,11 +33,10 @@ post '/callback' do
           type: 'text',
           text: event.message['text']
         }
+        bot_input = event.message['text'].to_json
+        response = RestClient.post(settings.bot_url, bot_input, content_type: :json, accept: :json)
+        p response
         client.reply_message(event['replyToken'], message)
-      when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-        response = client.get_message_content(event.message['id'])
-        tf = Tempfile.open("content")
-        tf.write(response.body)
       end
     end
   end
