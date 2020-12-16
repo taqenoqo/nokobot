@@ -1,0 +1,15 @@
+version: "3"
+services:
+  bot:
+  db:
+  line:
+    networks:
+      - default
+      - proxy
+    environment:
+      RACK_ENV: production
+
+networks:
+  proxy:
+    external: 
+      name: ${PROXY_NETWORK_NAME}

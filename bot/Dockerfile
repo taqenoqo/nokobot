@@ -6,11 +6,18 @@ RUN stack setup
 WORKDIR /root/.stack/global-project
 COPY stack.yaml stack.yaml.lock ./
 RUN echo "name: fake" >package.yaml
+RUN stack build vector
+RUN stack build attoparsec
+RUN stack build text
 RUN stack build aeson
 RUN stack build rio
 RUN stack build wai
+RUN stack build cryptonite
 RUN stack build warp
+RUN stack build wai-extra
+RUN stack build wai-app-static
 RUN stack build servant-server
+RUN stack build conduit
 RUN stack build persistent
 RUN stack build persistent-template
 

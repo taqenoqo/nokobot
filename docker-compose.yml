@@ -3,17 +3,16 @@ services:
   bot:
     build: ./bot/
     ports:
-      - "3000:3000"
+      - "${BOT_PORT}:3000/tcp"
     environment:
       MYSQL_HOST: "db"
       RIO_VERBOSE: 1
+      VIRTUAL_HOST: "${BOT_HOST_NAME}"
     depends_on:
       - "db"
 
   db:
     image: mysql:5.7 # 最新版だとbotから接続時に SSL connection error: unknown error number
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_ROOT_PASSWORD: ""
@@ -25,8 +24,11 @@ services:
 
   line:
     build: ./line/
+    ports:
+      - "${LINE_PORT}:4567/tcp"
     environment:
-      VIRTUAL_HOST: "${LINE_VIRTUAL_HOST}"
+      VIRTUAL_HOST: "${LINE_HOST_NAME}"
+      LETSENCRYPT_HOST:  "${LINE_HOST_NAME}"
       CHANNEL_ID: "${LINE_CHANNEL_ID}"
       CHANNEL_SECRET: "${LINE_CHANNEL_SECRET}"
       CHANNEL_TOKEN: "${LINE_CHANNEL_TOKEN}"
