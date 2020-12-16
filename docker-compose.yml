@@ -2,8 +2,8 @@ version: "3"
 services:
   bot:
     build: ./bot/
-    ports:
-      - "${BOT_PORT}:3000/tcp"
+      #ports:
+      #  - "3000:3000"
     environment:
       MYSQL_HOST: "db"
       RIO_VERBOSE: 1
@@ -24,14 +24,15 @@ services:
 
   line:
     build: ./line/
-    ports:
-      - "${LINE_PORT}:4567/tcp"
     environment:
       VIRTUAL_HOST: "${LINE_HOST_NAME}"
       LETSENCRYPT_HOST:  "${LINE_HOST_NAME}"
       CHANNEL_ID: "${LINE_CHANNEL_ID}"
       CHANNEL_SECRET: "${LINE_CHANNEL_SECRET}"
       CHANNEL_TOKEN: "${LINE_CHANNEL_TOKEN}"
+      BOT_HOST_NAME: bot
+      BOT_PORT: 3000
+      PORT: 3001
       
 volumes:
   memory: {}
