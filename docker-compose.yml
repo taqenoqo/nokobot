@@ -2,12 +2,13 @@ version: "3"
 services:
   bot:
     build: ./bot/
-      #ports:
-      #  - "3000:3000"
+    expose: 
+      - 3000
     environment:
       MYSQL_HOST: "db"
       RIO_VERBOSE: 1
       VIRTUAL_HOST: "${BOT_HOST_NAME}"
+      VIRTUAL_PORT: 3000
     depends_on:
       - "db"
 
@@ -24,15 +25,18 @@ services:
 
   line:
     build: ./line/
+    expose:
+      - 3001
     environment:
       VIRTUAL_HOST: "${LINE_HOST_NAME}"
       LETSENCRYPT_HOST:  "${LINE_HOST_NAME}"
+      VIRTUAL_PORT: 3001
+      PORT: 3001
       CHANNEL_ID: "${LINE_CHANNEL_ID}"
       CHANNEL_SECRET: "${LINE_CHANNEL_SECRET}"
       CHANNEL_TOKEN: "${LINE_CHANNEL_TOKEN}"
       BOT_HOST_NAME: bot
       BOT_PORT: 3000
-      PORT: 3001
       
 volumes:
   memory: {}

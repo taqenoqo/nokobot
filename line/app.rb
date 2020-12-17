@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'line/bot'
 require 'rest-client'
+require 'json'
 
 configure do
   set :port, ENV["PORT"]
@@ -29,14 +30,10 @@ post '/callback' do
     when Line::Bot::Event::Message
       case event.type
       when Line::Bot::Event::MessageType::Text
-        message = {
-          type: 'text',
-          text: event.message['text']
-        }
         bot_input = event.message['text'].to_json
         response = RestClient.post(settings.bot_url, bot_input, content_type: :json, accept: :json)
-        p response
-        client.reply_message(event['replyToken'], message)
+        bot_output = JSON.parse(response.body)
+        client.reply_message(event['replyToken'], { type: 'text', text: bot_output })
       end
     end
   end
