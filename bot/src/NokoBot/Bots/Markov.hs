@@ -3,6 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeApplications #-}
 module NokoBot.Bots.Markov 
   ( Markov
   , HasMarkovConfig(..)
@@ -59,9 +60,13 @@ instance Bot (Markov) where
     return $ Markov m
 
   reply (Markov mecab) (Message _ msg) = runSql $ do
-    learn mecab msg
-    response <- say
-    return $ Just response
+    unless (msg == "のこ") $ learn mecab msg
+    r <- liftIO $ getStdRandom $ randomR @Int (1, 20)
+    if r > 1 && msg /= "のこ" then
+      return Nothing
+    else do
+      response <- say
+      return $ Just response
 
 type DbRIO e a = ReaderT SqlBackend (LoggingT (ResourceT (RIO e))) a
 

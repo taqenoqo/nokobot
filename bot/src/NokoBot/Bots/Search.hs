@@ -12,5 +12,5 @@ instance Bot (Search) where
   name _ = "Search"
   init = return Search 
   reply _ _ = do
-    return $ Just "serhoge"
+    return Nothing
 

@@ -2,6 +2,7 @@ version: "3"
 services:
   bot:
     build: ./bot/
+    image: taqenoqo/nokobot
     expose: 
       - 3000
     environment:
