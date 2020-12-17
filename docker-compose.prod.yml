@@ -1,0 +1,18 @@
+version: "3"
+services:
+  bot:
+    restart: always
+  db:
+    restart: always
+  line:
+    networks:
+      - default
+      - proxy
+    environment:
+      RACK_ENV: production
+    restart: always
+
+networks:
+  proxy:
+    external: 
+      name: ${PROXY_NETWORK_NAME}

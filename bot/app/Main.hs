@@ -65,5 +65,5 @@ postBot input = do
   r <- reply bs $ Message now input
   case r of
     Just s -> return s
-    Nothing -> return "nothing"
+    Nothing -> return ""
 
