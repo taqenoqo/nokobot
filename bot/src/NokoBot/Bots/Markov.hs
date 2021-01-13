@@ -20,6 +20,7 @@ import qualified Text.MeCab as MeCab
 import Control.Monad.Logger (LoggingT, runStdoutLoggingT)
 import Conduit (ResourceT, runResourceT)
 import System.Random (getStdRandom, randomR)
+import Control.Monad.Extra
 
 share 
   [ mkPersist sqlSettings
@@ -45,11 +46,10 @@ share
 class HasMarkovConfig env where
   dbConfigL :: Lens' env ConnectInfo
 
-data Markov = Markov
+newtype Markov = Markov
   { mecab :: MeCab.MeCab }
 
-instance Bot (Markov) where
-
+instance Bot Markov where
   type DepF Markov = HasLogFunc :&: HasMarkovConfig
 
   name _ = "Markov"
@@ -60,15 +60,21 @@ instance Bot (Markov) where
     return $ Markov m
 
   reply (Markov mecab) (Message _ msg) = runSql $ do
-    unless (msg == "のこ") $ learn mecab msg
-    r <- liftIO $ getStdRandom $ randomR @Int (1, 20)
-    if r > 1 && msg /= "のこ" then
-      return Nothing
-    else do
-      response <- say
-      return $ Just response
+    unless (isTriggerMsg msg) $ learn mecab msg
+    whenMaybeM (isTimeToSay msg) say
 
 type DbRIO e a = ReaderT SqlBackend (LoggingT (ResourceT (RIO e))) a
+
+isTimeToSay :: Text -> DbRIO e Bool
+isTimeToSay inputMsg = do
+  r <- rand (1, 50)
+  return $ r <= 1 || isTriggerMsg inputMsg
+
+isTriggerMsg :: Text -> Bool
+isTriggerMsg = (==) "のこ"
+
+rand :: (Int, Int) -> DbRIO e Int
+rand (min, max) = liftIO $ getStdRandom $ randomR @Int (min, max)
 
 retry :: HasLogFunc e => Int -> Int -> RIO e a -> RIO e a
 retry n delay act
@@ -85,44 +91,46 @@ runSql rio = do
 
 learn :: MeCab.MeCab -> Text -> DbRIO e ()
 learn mecab msg = do
-  utc <- getCurrentTime
   ns <- liftIO $ MeCab.parseToNodes mecab msg
   let ms = deleteBosEos $ map mkMorpheme ns
   mIds <- insertMorphemes ms
-  insertTransitions utc (to3gram mIds)
+  insertTransitions $ to3gram mIds
 
-say :: DbRIO e (Text)
-say = do
-  mkSentence (Nothing, Nothing, Nothing) ""
+say :: DbRIO e Text
+say = mkSentence (Nothing, Nothing, Nothing) ""
 
 mkSentence :: (Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId) -> Text -> DbRIO e Text
-mkSentence (mp2, mp1, mp0) s' = do
+mkSentence mps@(mp2, mp1, mp0) txt' = do
+  ts <- fetchTransitionsByMorphemes mps
+  t <- pickRandTransition ts
+  txt <- appendTransitionWord t txt'
+  case transitionNextMorp t of
+    Nothing -> return txt
+    Just m -> mkSentence (mp1, mp0, Just m) txt
+
+fetchTransitionsByMorphemes :: (Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId) -> DbRIO e [Transition]
+fetchTransitionsByMorphemes (mp2, mp1, mp0) = do
   es <- selectList 
     [ TransitionPrev2Morp ==. mp2
     , TransitionPrev1Morp ==. mp1
     , TransitionPrev0Morp ==. mp0
     ] []
-  let ts = map entityVal es
-  t <- pickRandTransition ts
-  s <- appendTransitionWord t s'
-  case transitionNextMorp t of
-    Nothing -> return s
-    Just m -> mkSentence (mp1, mp0, Just m) s
+  return $ map entityVal es
 
 appendTransitionWord :: Transition -> Text -> DbRIO e Text
-appendTransitionWord t s = do
+appendTransitionWord t txt = do
   case transitionPrev0Morp t of
-    Nothing  -> return s
+    Nothing  -> return txt
     Just mId -> do
-      m <- getJust $ mId
-      return $ s `T.append` morphemeWord m
+      m <- getJust mId
+      return $ txt `T.append` morphemeWord m
 
 pickRandTransition :: [Transition] -> DbRIO e Transition
 pickRandTransition ts = do
   let totalCnt = sum $ map transitionCount ts
-  r <- liftIO $ getStdRandom $ randomR (1, totalCnt)
+  r <- rand (1, totalCnt)
   case pick transitionCount r ts of
-    Nothing -> error "consistency error."
+    Nothing -> throwString "Bug: pick function underflow"
     Just t -> return t
 
 pick :: (a -> Int) -> Int -> [a] -> Maybe a
@@ -132,24 +140,34 @@ pick f n (t : ts)
   | n <= f t = Just t
   | otherwise = pick f (n - f t) ts
 
-insertTransitions :: UTCTime -> [(Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId)] -> DbRIO e ()
-insertTransitions utc = ins Nothing . reverse where
-  ins :: Maybe MorphemeId -> [(Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId)] -> DbRIO e ()
-  ins _ [] = return ()
-  ins mId ((mp2, mp1, mp0) : ms) = do
-    em <- selectFirst 
-      [ TransitionPrev2Morp ==. mp2
-      , TransitionPrev1Morp ==. mp1
-      , TransitionPrev0Morp ==. mp0
-      , TransitionNextMorp  ==. mId
-      ] []
-    case em of
-      Nothing -> do
-        insert (Transition mp2 mp1 mp0 mId utc 1)
-      Just e -> do
-        update (entityKey e) [TransitionCount +=. 1]
-        return $ entityKey e
-    ins mp0 ms
+insertTransitions :: [(Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId)] -> DbRIO e ()
+insertTransitions = go Nothing . reverse where
+  go :: Maybe MorphemeId -> [(Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId)] -> DbRIO e ()
+  go _ [] = return ()
+  go mn (mt@(_, _, m0) : mts) = do
+    upsertTransition mt mn 
+    go m0 mts
+
+upsertTransition :: (Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId) -> Maybe MorphemeId -> DbRIO e ()
+upsertTransition mMs mMn = maybeM (insertTransition mMs mMn) incrementTransitionCount (fetchTransitionId mMs mMn)
+
+incrementTransitionCount :: TransitionId -> DbRIO e ()
+incrementTransitionCount tId = update tId [TransitionCount +=. 1]
+
+insertTransition :: (Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId) -> Maybe MorphemeId -> DbRIO e ()
+insertTransition (mM2, mM1, mM0) mMn = do
+  now <- getCurrentTime
+  void $ insert (Transition mM2 mM1 mM0 mMn now 1)
+
+fetchTransitionId :: (Maybe MorphemeId, Maybe MorphemeId, Maybe MorphemeId) -> Maybe MorphemeId -> DbRIO e (Maybe TransitionId)
+fetchTransitionId (mM2, mM1, mM0) mMn = do
+  mE <- selectFirst 
+    [ TransitionPrev2Morp ==. mM2
+    , TransitionPrev1Morp ==. mM1
+    , TransitionPrev0Morp ==. mM0
+    , TransitionNextMorp  ==. mMn
+    ] []
+  return $ entityKey <$> mE
 
 deleteBosEos :: [Morpheme] -> [Morpheme]
 deleteBosEos ms = [ m | m <- ms, morphemeWord m /= "" ]
