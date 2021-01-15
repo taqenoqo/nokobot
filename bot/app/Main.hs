@@ -33,18 +33,18 @@ setByMaybe = maybe id
 
 initialize :: RIO (MyEnv Config) InitVal
 initialize = do
-  logInfo "Starting server."
+  logInfo "Starting server..."
   InitVal <$> initAllBots
 
 mkApplication :: Config -> InitVal -> Application
 mkApplication config iv = serve api $ hoistMyServer api server config iv
 
 hoistMyServer :: Proxy Api -> MyServer Api -> Config -> InitVal -> Server Api
-hoistMyServer a s config iv = hoistServer a (runMyRIO (config, iv)) s where
+hoistMyServer a s config iv = hoistServer a (runMyRIO (config, iv)) s
 
 runMyRIO :: MonadIO m => e -> RIO (MyEnv e) a -> m a
 runMyRIO envData rio = runSimpleApp $ do
-  lo <- logOptionsHandle stdout False
+  lo <- logOptionsHandle stderr False
   withLogFunc lo $ \lf -> do
     pc <- mkDefaultProcessContext
     runRIO (MyEnv lf pc envData) rio

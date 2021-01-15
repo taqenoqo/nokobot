@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 90b4ced8756bd2bfd85e656dc1820a18dd270b0643b5118ade90792524ce4ca5
 
 name:           bot
 version:        0.1.0.0
@@ -30,6 +32,7 @@ library
       base >=4.7 && <5
     , conduit
     , constraints
+    , extra
     , mecab
     , monad-logger
     , persistent
@@ -54,6 +57,7 @@ executable bot
     , bot
     , conduit
     , constraints
+    , extra
     , mecab
     , monad-logger
     , persistent
@@ -80,6 +84,7 @@ test-suite bot-test
     , bot
     , conduit
     , constraints
+    , extra
     , mecab
     , monad-logger
     , persistent
