@@ -19,9 +19,18 @@ services:
       MYSQL_ROOT_PASSWORD: ""
       MYSQL_DATABASE: "test"
       BIND-ADDRESS: 0.0.0.0
+      LANG: C.UTF-8
     volumes: 
       - "memory:/var/lib/mysql"
     tty: true
+
+  cli:
+    build: ./cli/
+    environment:
+      BOT_HOST_NAME: bot
+      BOT_PORT: 3000
+    entrypoint: ""
+    command: "true"
 
   line:
     build: ./line/
