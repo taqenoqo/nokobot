@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd $APP_DIR
+bundle exec ruby ./src/chat.rb ${@:1}
+

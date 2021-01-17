@@ -1,3 +1,5 @@
+# デプロイ用のComposeファイル。
+# docker-compose.yml にオーバーライドして使う。
 version: "3"
 services:
   bot:
