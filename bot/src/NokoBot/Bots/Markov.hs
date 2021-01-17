@@ -67,7 +67,7 @@ type DbRIO e a = ReaderT SqlBackend (LoggingT (ResourceT (RIO e))) a
 
 isTimeToSay :: Text -> DbRIO e Bool
 isTimeToSay inputMsg = do
-  r <- rand (1, 50)
+  r <- rand (1, 1000)
   return $ r <= 1 || isTriggerMsg inputMsg
 
 isTriggerMsg :: Text -> Bool
