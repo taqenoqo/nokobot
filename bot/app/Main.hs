@@ -3,7 +3,7 @@
 
 module Main where
 
-import Types
+import Env
 import NokoBot
 import Servant
 import RIO hiding (Handler)
@@ -14,11 +14,20 @@ import RIO.Time (getZonedTime)
 import Database.Persist.MySQL (ConnectInfo (..), defaultConnectInfo)
 import Network.Wai.Handler.Warp (run)
 
+type RioServer api env = ServerT api (RIO env)
+
+hoistRioServer :: Proxy Api -> RioServer Api env -> env -> Server Api
+hoistRioServer p s e = hoistServer p (runRIO e) s
+
+mkApplication :: RunTimeEnv -> Application
+mkApplication env = serve api $ hoistRioServer api server env
+
 main :: IO ()
-main = do
-  config <- runSimpleApp mkConfig
-  initVal <- runMyRIO config initialize
-  run 3000 $ mkApplication config initVal
+main = runSimpleApp $ do
+  config <- mkConfig
+  env <- runInit config initialize
+  let app = mkApplication env
+  liftIO $ run 3000 app
 
 mkConfig :: RIO SimpleApp Config
 mkConfig = Config <$> mkDbInfo where
@@ -31,23 +40,13 @@ mkConfig = Config <$> mkDbInfo where
 setByMaybe :: (a -> s -> s) -> Maybe a -> s -> s
 setByMaybe = maybe id
 
-initialize :: RIO (MyEnv Config) InitVal
+initialize :: RIO InitTimeEnv RunTimeEnv
 initialize = do
   logInfo "Starting server..."
-  InitVal <$> initAllBots
-
-mkApplication :: Config -> InitVal -> Application
-mkApplication config iv = serve api $ hoistMyServer api server config iv
-
-hoistMyServer :: Proxy Api -> MyServer Api -> Config -> InitVal -> Server Api
-hoistMyServer a s config iv = hoistServer a (runMyRIO (config, iv)) s
-
-runMyRIO :: MonadIO m => e -> RIO (MyEnv e) a -> m a
-runMyRIO envData rio = runSimpleApp $ do
-  lo <- logOptionsHandle stderr False
-  withLogFunc lo $ \lf -> do
-    pc <- mkDefaultProcessContext
-    runRIO (MyEnv lf pc envData) rio
+  RunTimeEnv
+    <$> view rioEnv
+    <*> view config
+    <*> initAllBots
 
 api :: Proxy Api
 api = Proxy
@@ -55,13 +54,13 @@ api = Proxy
 type Api =
   "bot" :> ReqBody '[JSON] Text :> Post '[JSON] Text
 
-server :: MyServer Api
+server :: RioServer Api RunTimeEnv
 server = postBot
 
-postBot :: (HasAllBots e, AllBotConstraints e) => Text -> RIO e Text
+postBot :: Text -> RIO RunTimeEnv Text
 postBot input = do
   now <- getZonedTime
-  bs <- view allBotsL
+  bs <- view runTimeEnvAllBots
   r <- reply bs $ Message now input
   case r of
     Just s -> return s
