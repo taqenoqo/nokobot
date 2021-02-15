@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
@@ -13,6 +14,9 @@ import qualified RIO.Text as T
 import RIO.Time (getZonedTime)
 import Database.Persist.MySQL (ConnectInfo (..), defaultConnectInfo)
 import Network.Wai.Handler.Warp (run)
+import Control.Lens.TH
+
+makeClassy_ ''ConnectInfo
 
 type RioServer api env = ServerT api (RIO env)
 
@@ -34,11 +38,12 @@ mkConfig = Config <$> mkDbInfo where
   mkDbInfo :: RIO SimpleApp ConnectInfo
   mkDbInfo = do
     envs <- view envVarsL
-    return $ defaultConnectInfo{connectSSL = Nothing}
-      & setByMaybe (\v i -> i {connectHost = T.unpack v}) (envs Map.!? "MYSQL_HOST")
+    return $ defaultConnectInfo
+      & _connectHost .~? (T.unpack <$> envs Map.!? "MYSQL_HOST")
 
-setByMaybe :: (a -> s -> s) -> Maybe a -> s -> s
-setByMaybe = maybe id
+(.~?) :: ASetter' s a -> Maybe a -> s -> s
+(.~?) l = maybe id (l .~)
+infixr 4 .~?
 
 initialize :: RIO InitTimeEnv RunTimeEnv
 initialize = do
