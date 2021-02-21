@@ -71,7 +71,7 @@ isTimeToSay inputMsg = do
   return $ r <= 1 || isTriggerMsg inputMsg
 
 isTriggerMsg :: Text -> Bool
-isTriggerMsg = (==) "のこ"
+isTriggerMsg t = t == "なつ" || t == "夏生" || t == "大貝" || t == "大貝夏生"
 
 rand :: (Int, Int) -> DbRIO e Int
 rand (min, max) = liftIO $ getStdRandom $ randomR @Int (min, max)
