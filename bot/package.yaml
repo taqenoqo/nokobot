@@ -5,8 +5,7 @@ author:              "taqenoqo"
 maintainer:          "tak3n0k0@gmail.com"
 copyright:           "2020 taqenoqo"
 
-extra-source-files:
-- README.md
+extra-source-files: []
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -29,6 +28,7 @@ dependencies:
 - monad-logger
 - conduit
 - random
+- lens
 
 default-extensions:
 - NoImplicitPrelude

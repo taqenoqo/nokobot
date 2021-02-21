@@ -1,0 +1,16 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "bot:lib"
+
+    - path: "./app/Main.hs"
+      component: "bot:exe:bot"
+
+    - path: "./app/Types.hs"
+      component: "bot:exe:bot"
+
+    - path: "./app/Paths_bot.hs"
+      component: "bot:exe:bot"
+
+    - path: "./test"
+      component: "bot:test:bot-test"
